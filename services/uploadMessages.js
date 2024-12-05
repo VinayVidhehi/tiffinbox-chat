@@ -9,11 +9,9 @@ const storeMessageInDB = async (senderId, recipientId, message) => {
       .from('messages')  // Assuming you have a 'messages' table
       .insert([
         {
-          sender_id: senderId,
-          recipient_id: recipientId,
+          senderId: senderId,
+          recipientId: recipientId,
           message: message,
-          timestamp: new Date(),
-          delivered: false,  // Set delivered flag as false initially
         }
       ]);
 

@@ -58,9 +58,9 @@ router.get('/retrieve-customer-messages', verifyJWT, async (req, res) => {
         .from('messages') // Assuming the table name is 'messages'
         .select('*')
         .or(
-          `sender_id.eq.${fullSenderId},receiver_id.eq.${receiverId}`
+          `senderId.eq.${fullSenderId},receiverId.eq.${receiverId}`
         )
-        .order('timestamp', { ascending: true }); // Order messages by timestamp
+        .order('created_at', { ascending: true }); // Order messages by timestamp
   
       if (error) {
         console.error('Error retrieving messages:', error);
