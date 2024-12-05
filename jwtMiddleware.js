@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 const errorCodes = require('./errorCodes');
+require('dotenv').config();
 
 // Secret key for JWT
-const JWT_SECRET = 'AhQi8ZzFPbFHaJzi8KzifiQeQJMpfSgFWmrsThcsWhNVYv8Yf1nQfixODayITBRgYCpzhg4jv1kX2RZy+kXYfA==';
 
 // JWT Verification Middleware
 const verifyJWT = (req, res, next) => {
@@ -20,7 +20,7 @@ const verifyJWT = (req, res, next) => {
     const formattedToken = token.startsWith('Bearer ') ? token.slice(7, token.length) : token;
 
     // Verify the token
-    jwt.verify(formattedToken, JWT_SECRET, (err, decoded) => {
+    jwt.verify(formattedToken, process.env.JWT_SECRET_KEY, (err, decoded) => {
         if (err) {
             // Log the error for debugging purposes
             console.error("Token verification error: ", err);
