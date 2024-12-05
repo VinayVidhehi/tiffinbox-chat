@@ -34,8 +34,9 @@ const usersOnline = {}; // Maps userId to socketId
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
-  socket.on("join", ({ jwtToken }) => {
-    const user = verifyJwt(jwtToken);
+  socket.on("join", async ({ jwtToken }) => {
+    const user = await verifyJwt(jwtToken);
+    console.log("user is", user);
     if (!user) {
       console.error("Invalid token during join event.");
       return;
@@ -53,7 +54,7 @@ io.on("connection", (socket) => {
   socket.on(
     "send_message",
     async ({ jwtToken, message, isCustomer, recipientId }) => {
-      const user = verifyJWT(jwtToken);
+      const user = await verifyJwt(jwtToken);
       if (!user) {
         console.error("Invalid token during send_message event.");
         return;
@@ -105,15 +106,15 @@ server.listen(PORT, () => {
 });
 
 const verifyJwt = (token) => {
-  // Verify the token
-  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
-    if (err) {
-      // Log the error for debugging purposes
-      console.error("Token verification error: ", err);
-      return res
-        .status(errorCodes.FORBIDDEN.status)
-        .json({ message: errorCodes.FORBIDDEN.message });
-    }
-    return decoded;
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+      if (err) {
+        console.error("Token verification error: ", err);
+        reject(null); // Reject with null if token verification fails
+      } else {
+        console.log("Decoded token: ", decoded);
+        resolve(decoded); // Resolve with decoded token
+      }
+    });
   });
 };
