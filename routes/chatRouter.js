@@ -42,7 +42,7 @@ router.get('/retrieve-vendor-messages', verifyJWT , async (req, res) => {
 });
 
 // Function to retrieve messages when the customer is the receiver
-router.get('/retrieve-customer-messages', jwtMiddleware, async (req, res) => {
+router.get('/retrieve-customer-messages', verifyJWT, async (req, res) => {
     const {customerId} = req.user; // Customer's ID from JWT token
     const senderId = req.query.vendorId; // Sender ID from the query parameter
     
@@ -76,7 +76,7 @@ router.get('/retrieve-customer-messages', jwtMiddleware, async (req, res) => {
   });
   
 // Function to delete messages based on messageIds
-router.delete('/delete-messages', jwtMiddleware, async (req, res) => {
+router.delete('/delete-messages', verifyJWT, async (req, res) => {
     const { messageIds } = req.body; // Expecting an array of messageIds in the request body
   
     if (!messageIds || messageIds.length === 0) {
