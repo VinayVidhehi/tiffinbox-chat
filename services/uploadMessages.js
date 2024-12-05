@@ -10,7 +10,7 @@ const storeMessageInDB = async (senderId, recipientId, message, isCustomer) => {
   try {
     // Add suffixes to IDs
     const formattedSenderId = addUserTypeSuffix(senderId, isCustomer);
-    const formattedRecipientId = addUserTypeSuffix(recipientId, isSenderCustomer);
+    const formattedRecipientId = addUserTypeSuffix(recipientId, !isCustomer);
 
     // Store message in the database
     const { data, error } = await supabase

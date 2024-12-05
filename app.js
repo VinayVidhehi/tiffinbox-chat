@@ -53,7 +53,7 @@ io.on("connection", (socket) => {
   // Handle sending messages
   socket.on(
     "send_message",
-    async ({ jwtToken, message, isCustomer, recipientId }) => {
+    async ({ jwtToken, message, recipientId, isCustomer,  }) => {
       const user = await verifyJwt(jwtToken);
       if (!user) {
         console.error("Invalid token during send_message event.");
