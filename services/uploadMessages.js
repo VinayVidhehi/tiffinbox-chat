@@ -18,7 +18,7 @@ const storeMessageInDB = async (senderId, recipientId, message, isCustomer) => {
       .insert([
         {
           senderId: formattedSenderId,
-          recipientId: formattedRecipientId,
+          receiverId: formattedRecipientId,
           message: message,
         },
       ]);
