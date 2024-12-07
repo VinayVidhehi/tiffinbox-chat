@@ -8,38 +8,96 @@ const router = express.Router();
 require('dotenv').config();
 
 // Function to retrieve messages when the vendor is the receiver
-router.get('/retrieve-vendor-messages', verifyJWT , async (req, res) => {
-  const {vendorId} = req.user; // Vendor's ID from JWT token
-  const senderId = req.query.customerId; // Sender ID from the query parameter
+  router.get('/retrieve-vendor-messages', verifyJWT, async (req, res) => {
+    const { vendorId } = req.user; // Vendor's ID from JWT token
+    const receiverId = `${vendorId}v`; // Receiver ID for the vendor
   
-  // Concatenate 'v' to the vendor ID (vendorId will be used as receiverId)
-  const receiverId = `${vendorId}v`;
+    console.log(`Vendor ID: ${vendorId}`);
+    console.log(`Receiver ID (Vendor): ${receiverId}`);
+  
+    try {
+      console.log('Fetching messages for the vendor...');
+      const { data: messages, error: messageError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('receiverId', receiverId)
+        .order('created_at', { ascending: true });
+  
+      if (messageError) {
+        console.error('Error retrieving messages from the database:', messageError);
+        return res.status(500).json({ error: 'An error occurred while retrieving messages.' });
+      }
+  
+      if (!messages || messages.length === 0) {
+        console.warn('No messages found for the vendor.');
+        return res.status(200).json({ customers: [] });
+      }
+  
+      console.log(`Total messages retrieved: ${messages.length}`);
+      
+      console.log('Grouping messages by customerId...');
+      const groupedMessages = messages.reduce((acc, message) => {
+        const customerId = message.senderId.replace(/c$/, ''); // Remove trailing "c"
+        if (!acc[customerId]) {
+          acc[customerId] = {
+            customerId,
+            messages: [],
+          };
+        }
+        acc[customerId].messages.push(message);
+        return acc;
+      }, {});
+  
+      const customerIds = Object.keys(groupedMessages);
+      console.log(`Unique customer IDs extracted: ${customerIds} and their type is ${typeof(customerIds?.[0])}`);
+  
+      if (customerIds.length === 0) {
+        console.warn('No unique customers found in the messages.');
+        return res.status(200).json({ customers: [] });
+      }
 
-  // Concatenate 'c' to the senderId (senderId should be customer with 'c' suffix)
-  const fullSenderId = `${senderId}c`; 
+      const parsedCustomerIds = customerIds.map((customerId) => {
+        return parseInt(customerId, 10); // Convert customerId to integer
+      })
 
-  try {
-    // Retrieve messages where senderId is customer and receiverId is the vendor
-    const { data, error } = await supabase
-      .from('messages') // Assuming the table name is 'messages'
-      .select('*')
-      .or(
-        `senderId.eq.${fullSenderId},receiverId.eq.${receiverId}`
-      )
-      .order('timestamp', { ascending: true }); // Order messages by timestamp
-
-    if (error) {
-      console.error('Error retrieving messages:', error);
-      return res.status(500).json({ error: 'An error occurred while retrieving messages.' });
+      console.log(`Parsed customer IDs extracted: ${parsedCustomerIds} and their type is ${typeof(parsedCustomerIds?.[0])}`);
+  
+      console.log('Fetching customer details from the database...');
+      const { data: customers, error: customerError } = await supabase
+        .from('customers')
+        .select('customerId, name, phoneNumber')
+        .in('customerId', parsedCustomerIds);
+  
+      if (customerError) {
+        console.error('Error retrieving customers from the database:', customerError);
+        return res.status(500).json({ error: 'An error occurred while retrieving customer details.' });
+      }
+  
+      console.log(`Customer details retrieved: ${customers.length} records`);
+  
+      console.log('Mapping customer details to grouped messages...');
+      const result = customerIds.map((customerId) => {
+        const customer = customers.find((cust) => cust.customerId == customerId) || {};
+        const messagesForCustomer = groupedMessages[customerId]?.messages || [];
+  
+        console.log(`Customer ID: ${customerId}, Messages Count: ${messagesForCustomer.length}`);
+        return {
+          customerId,
+          name: customer.name || 'Unknown',
+          phoneNumber: customer.phoneNumber || 'Unknown',
+          messages: messagesForCustomer,
+        };
+      });
+  
+      console.log('Final result prepared, sending response...');
+      res.json({ customers: result });
+    } catch (err) {
+      console.error('Unexpected error occurred during message retrieval:', err);
+      res.status(500).json({ error: 'Failed to retrieve messages.' });
     }
+  });
+  
 
-    // Send the retrieved messages
-    res.json({ messages: data });
-  } catch (err) {
-    console.error('Error in message retrieval:', err);
-    res.status(500).json({ error: 'Failed to retrieve messages.' });
-  }
-});
 
 // Function to retrieve messages when the customer is the receiver
 router.get('/retrieve-customer-messages', verifyJWT, async (req, res) => {
