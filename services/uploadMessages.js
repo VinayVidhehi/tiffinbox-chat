@@ -2,8 +2,12 @@ const supabase = require('../dbconnection'); // Adjust path as needed
 
 // Helper function to determine suffix for user ID
 const addUserTypeSuffix = (userId, isCustomer) => {
+  if (userId.endsWith('c') || userId.endsWith('v')) {
+    return userId; // Return as is if it already has the suffix
+  }
   return isCustomer ? `${userId}c` : `${userId}v`;
 };
+
 
 // Function to store message in the database when recipient is offline
 const storeMessageInDB = async (senderId, recipientId, message, isCustomer) => {

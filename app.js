@@ -43,7 +43,8 @@ io.on("connection", (socket) => {
     }
 
     const { customerId, vendorId } = user; // Extract user details from token
-    const userId = customerId || vendorId; // Determine the user's ID
+    const userId = customerId ? `${customerId}c` : `${vendorId}v`;
+
     console.log(`${userId} has joined the chat`);
 
     usersOnline[userId] = socket.id; // Map userId to socketId
@@ -53,19 +54,26 @@ io.on("connection", (socket) => {
   // Handle sending messages
   socket.on(
     "send_message",
-    async ({ jwtToken, message, recipientId, isCustomer,  }) => {
+    async ({ jwtToken, message, recipientId, isCustomer }) => {
       const user = await verifyJwt(jwtToken);
       if (!user) {
         console.error("Invalid token during send_message event.");
         return;
       }
 
-      const senderId = user.customerId || user.vendorId; // Extract sender's ID from token
+      const { customerId, vendorId } = user; // Extract user details from token
+      const senderId = customerId ? `${customerId}c` : `${vendorId}v`;
 
       console.log(`Message from ${senderId} to ${recipientId}: ${message}`);
 
-      // Check if recipient is online
-      const recipientSocketId = usersOnline[recipientId];
+      // Ensure the recipientId has a trailing 'v' if it's missing
+      const formattedRecipientId = recipientId.endsWith("c")
+        ? recipientId
+        : `${recipientId}v`;
+
+      // Check if the recipient is online
+      const recipientSocketId = usersOnline[formattedRecipientId];
+
       if (recipientSocketId) {
         // Recipient is online; send message directly
         io.to(recipientSocketId).emit("receive_message", {
