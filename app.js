@@ -71,6 +71,8 @@ io.on("connection", (socket) => {
       
       console.log(`Message from ${senderId} to ${formattedRecipientId}: ${message}`);
 
+      console.log("users online are", usersOnline);
+
       // Check if the recipient is online
       const recipientSocketId = usersOnline[formattedRecipientId];
 
