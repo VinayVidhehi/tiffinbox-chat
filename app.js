@@ -43,6 +43,7 @@ io.on("connection", (socket) => {
     }
 
     const { customerId, vendorId } = user; // Extract user details from token
+    console.log("customerId and vendorId", customerId, vendorId);
     const userId = customerId ? `${customerId}c` : `${vendorId}v`;
 
     console.log(`${userId} has joined the chat`);
@@ -62,14 +63,13 @@ io.on("connection", (socket) => {
       }
 
       const { customerId, vendorId } = user; // Extract user details from token
-      const senderId = customerId ? `${customerId}c` : `${vendorId}v`;
+      const senderId = isCustomer ? `${customerId}c` : `${vendorId}v`;
 
-      console.log(`Message from ${senderId} to ${recipientId}: ${message}`);
-
+      
       // Ensure the recipientId has a trailing 'v' if it's missing
-      const formattedRecipientId = recipientId.endsWith("c")
-        ? recipientId
-        : `${recipientId}v`;
+      const formattedRecipientId = isCustomer ? `${recipientId}v` : `${recipientId}c`;
+      
+      console.log(`Message from ${senderId} to ${formattedRecipientId}: ${message}`);
 
       // Check if the recipient is online
       const recipientSocketId = usersOnline[formattedRecipientId];
